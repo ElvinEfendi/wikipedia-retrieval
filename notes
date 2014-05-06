@@ -1,0 +1,55 @@
+ => Information
+The program consists of four main modules:
+ - Indexer: this module handle indexing documents
+ - Parser: this module parses the XML data file creates documents(Page object) and send it to Indexer for indexing
+ - Searcher: this module handles searching
+ - WikipediaRetriever: this is a wrapper module for all functionalities. You should run this module if you want to use provided functionalities of the program. After running this module you will have 2 options: first one is indexing the data and the second option is to query in already created index.
+
+ => Which fields are getting indexed and boosting(scoring by age)
+After analyzing the data we decided that page title, revision text and revision id need to be indexed. 
+We boost the field that has revision text based on revision timestamp. We have 2 constants calculated from the data before indexing. These two constants partitions the data into 3 periods according to timestamp: very old, old, recent revisions. We then set boost to the field with the formula of period_coefficient * timestamp/fixed_date_in_the_future. We chose period_coefficient 1, 5, 25 resepectively for very old, old and recent revisions. Considering timestamp while boosting ensures that there is goind to be difference even between the revisions from the same period.
+We boost also title field because usually a title of an article is more expressive.
+We keep revision_id to let users to know where they can find more information about the page they find after searching.
+
+ => Helper script to meaningfully choose thresholds for scoring by age
+To calculate the 2 constants before indexing we wrote a script to grep the data file and partioion the years from timestamps in 3 groups then return the boundary values(thresholds). To run the script you need to have Ruby interpreter: ruby find_periods <path to data.xml>
+We have already run the script on both small and big data files and following are the boundaries:
+ - for small data:
+Very old: 2003, 2004, 2005
+Old: 2006, 2007, 2008
+Recent: 2009, 2010
+
+upBoundaryForVeryOld = 2006-01-01
+   => timestamp < 2006-01-01
+upBoundaryForOld = 2009-01-01
+   => 2006-01-01 <= timestamp < 2009-01-01
+recent: timestamp >= 2009-01-01
+
+ - for big data dump:
+Very old: 2002, 2003, 2004, 2005
+Old: 2006, 2007, 2008, 2009
+Recent: 2010, 2011, 2012, 2013
+
+upBoundaryForVeryOld = 2006-01-01
+   => timestamp < 2006-01-01
+upBoundaryForOld = 2010-01-01
+   => 2006-01-01 <= timestamp < 2010-01-01
+recent: timestamp >= 2010-01-01
+
+ => Performance
+With Intel® Core™ i3-2310M CPU @ 2.10GHz × 4 and 4GB RAM 
+it took 14035066 milliseconds(~233 minutes) to index 44GB data; 
+To index smaller data it takes around 7165 milliseconds in total.
+
+
+ => How to run
+    - Unzip WikipediaRetriever.zip
+    - Open the newly created directory after unzipping(default is: p01-efendiev-seyidov)
+    - Run the following command:
+        java -Dfile.encoding=UTF-8 -classpath bin:libraries/commons-logging-1.1.3.jar:libraries/commons-digester3-3.2.jar:libraries/commons-beanutils-1.8.3.jar:libraries/lucene-core-4.5.1.jar:libraries/lucene-analyzers-common-4.5.1.jar:libraries/lucene-queryparser-4.5.1.jar WikipediaRetriever
+    - The outputs of the program will guide you later on
+
+ => PS: Everything is testing under Ubuntu precise 12.04
+
+
+
