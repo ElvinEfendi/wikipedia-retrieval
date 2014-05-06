@@ -1,4 +1,4 @@
-Parsing and indexing Wikipedia articles for querying
+Parsing and indexing Wikipedia articles
 ===================
 
 This is one of my courseworks I've done during my study.
